@@ -24,7 +24,7 @@ jobs:
         with:
           gradle-version: '8.0'
 
-      - name: Create Android Project Structure
+      - name: Create All Project Files
         run: |
           mkdir -p live2win-apk/app/src/main/java/com/live2win/app
           mkdir -p live2win-apk/app/src/main/res/mipmap-hdpi
@@ -35,8 +35,52 @@ jobs:
           mkdir -p live2win-apk/app/src/main/res/values
           mkdir -p live2win-apk/gradle/wrapper
 
-      - name: Create gradle wrapper properties
-        run: |
+          cat > live2win-apk/settings.gradle << 'EOF'
+          pluginManagement {
+              repositories { google(); mavenCentral(); gradlePluginPortal() }
+          }
+          dependencyResolutionManagement {
+              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+              repositories { google(); mavenCentral() }
+          }
+          rootProject.name = "live2win"
+          include ':app'
+          EOF
+
+          cat > live2win-apk/build.gradle << 'EOF'
+          plugins {
+              id 'com.android.application' version '8.1.0' apply false
+          }
+          EOF
+
+          cat > live2win-apk/app/build.gradle << 'EOF'
+          plugins {
+              id 'com.android.application'
+          }
+          android {
+              compileSdk 34
+              namespace 'com.live2win.app'
+              defaultConfig {
+                  applicationId "com.live2win.app"
+                  minSdk 21
+                  targetSdk 34
+                  versionCode 1
+                  versionName "1.0"
+              }
+              buildTypes {
+                  release {
+                      minifyEnabled false
+                      signingConfig signingConfigs.debug
+                  }
+              }
+              compileOptions {
+                  sourceCompatibility JavaVersion.VERSION_17
+                  targetCompatibility JavaVersion.VERSION_17
+              }
+          }
+          dependencies {}
+          EOF
+
           cat > live2win-apk/gradle/wrapper/gradle-wrapper.properties << 'EOF'
           distributionBase=GRADLE_USER_HOME
           distributionPath=wrapper/dists
@@ -45,14 +89,45 @@ jobs:
           zipStorePath=wrapper/dists
           EOF
 
-      - name: Generate Gradle Wrapper
-        run: |
-          cd live2win-apk
-          gradle wrapper
+          cat > live2win-apk/app/src/main/AndroidManifest.xml << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.live2win.app">
+              <uses-permission android:name="android.permission.INTERNET" />
+              <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+              <application
+                  android:allowBackup="true"
+                  android:icon="@mipmap/ic_launcher"
+                  android:label="Live2Win"
+                  android:theme="@style/AppTheme"
+                  android:usesCleartextTraffic="true"
+                  android:hardwareAccelerated="true">
+                  <activity android:name=".MainActivity" android:exported="true" android:screenOrientation="portrait">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN" />
+                          <category android:name="android.intent.category.LAUNCHER" />
+                      </intent-filter>
+                  </activity>
+              </application>
+          </manifest>
+          EOF
 
-      - name: Create MainActivity.java
-        run: |
-          cat > live2win-apk/app/src/main/java/com/live2win/app/MainActivity.java << 'EOF'
+          cat > live2win-apk/app/src/main/res/values/styles.xml << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <style name="AppTheme" parent="android:Theme.NoTitleBar.Fullscreen">
+                  <item name="android:windowBackground">#0a0a0a</item>
+              </style>
+          </resources>
+          EOF
+
+          cat > live2win-apk/app/src/main/res/values/strings.xml << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <string name="app_name">Live2Win</string>
+          </resources>
+          EOF
+
+          cat > live2win-apk/app/src/main/java/com/live2win/app/MainActivity.java << 'JAVAEOF'
           package com.live2win.app;
           import android.app.Activity;
           import android.os.Bundle;
@@ -117,51 +192,12 @@ jobs:
                   if (webView != null && webView.canGoBack()) { webView.goBack(); } else { super.onBackPressed(); }
               }
           }
-          EOF
+          JAVAEOF
 
-      - name: Create AndroidManifest.xml
+      - name: Generate Gradle Wrapper
         run: |
-          cat > live2win-apk/app/src/main/AndroidManifest.xml << 'EOF'
-          <?xml version="1.0" encoding="utf-8"?>
-          <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.live2win.app">
-              <uses-permission android:name="android.permission.INTERNET" />
-              <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-              <application
-                  android:allowBackup="true"
-                  android:icon="@mipmap/ic_launcher"
-                  android:label="Live2Win"
-                  android:theme="@style/AppTheme"
-                  android:usesCleartextTraffic="true"
-                  android:hardwareAccelerated="true">
-                  <activity android:name=".MainActivity" android:exported="true" android:screenOrientation="portrait">
-                      <intent-filter>
-                          <action android:name="android.intent.action.MAIN" />
-                          <category android:name="android.intent.category.LAUNCHER" />
-                      </intent-filter>
-                  </activity>
-              </application>
-          </manifest>
-          EOF
-
-      - name: Create styles.xml
-        run: |
-          cat > live2win-apk/app/src/main/res/values/styles.xml << 'EOF'
-          <?xml version="1.0" encoding="utf-8"?>
-          <resources>
-              <style name="AppTheme" parent="android:Theme.NoTitleBar.Fullscreen">
-                  <item name="android:windowBackground">#0a0a0a</item>
-              </style>
-          </resources>
-          EOF
-
-      - name: Create strings.xml
-        run: |
-          cat > live2win-apk/app/src/main/res/values/strings.xml << 'EOF'
-          <?xml version="1.0" encoding="utf-8"?>
-          <resources>
-              <string name="app_name">Live2Win</string>
-          </resources>
-          EOF
+          cd live2win-apk
+          gradle wrapper
 
       - name: Process App Icon
         run: |
@@ -175,58 +211,6 @@ jobs:
               convert -size ${S}x${S} xc:'#FF6B00' -fill white -gravity center -font DejaVu-Sans-Bold -pointsize $((S/3)) -annotate 0 'L2W' live2win-apk/app/src/main/res/mipmap-$D/ic_launcher.png
             fi
           done
-
-      - name: Create app build.gradle
-        run: |
-          cat > live2win-apk/app/build.gradle << 'EOF'
-          plugins {
-              id 'com.android.application'
-          }
-          android {
-              compileSdk 34
-              namespace 'com.live2win.app'
-              defaultConfig {
-                  applicationId "com.live2win.app"
-                  minSdk 21
-                  targetSdk 34
-                  versionCode 1
-                  versionName "1.0"
-              }
-              buildTypes {
-                  release {
-                      minifyEnabled false
-                      signingConfig signingConfigs.debug
-                  }
-              }
-              compileOptions {
-                  sourceCompatibility JavaVersion.VERSION_17
-                  targetCompatibility JavaVersion.VERSION_17
-              }
-          }
-          dependencies {}
-          EOF
-
-      - name: Create root build.gradle
-        run: |
-          cat > live2win-apk/build.gradle << 'EOF'
-          plugins {
-              id 'com.android.application' version '8.1.0' apply false
-          }
-          EOF
-
-      - name: Create settings.gradle
-        run: |
-          cat > live2win-apk/settings.gradle << 'EOF'
-          pluginManagement {
-              repositories { google(); mavenCentral(); gradlePluginPortal() }
-          }
-          dependencyResolutionManagement {
-              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-              repositories { google(); mavenCentral() }
-          }
-          rootProject.name = "live2win"
-          include ':app'
-          EOF
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
@@ -245,4 +229,3 @@ jobs:
           name: Live2Win-APK
           path: live2win-apk/app/build/outputs/apk/release/app-release.apk
           retention-days: 30
-          
