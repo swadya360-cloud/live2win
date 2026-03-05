@@ -11,10 +11,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
@@ -114,7 +114,7 @@ jobs:
                   layout.setBackgroundColor(Color.parseColor("#0a0a0a"));
 
                   TextView emoji = new TextView(this);
-                  emoji.setText("馃摱");
+                  emoji.setText("📶");
                   emoji.setTextSize(60);
                   emoji.setGravity(Gravity.CENTER);
 
@@ -200,7 +200,6 @@ jobs:
       - name: Process App Icon
         run: |
           sudo apt-get install -y imagemagick
-          # Find the icon file (Picsart uploaded file)
           ICON_FILE=$(find . -name "Picsart*" -o -name "icon*" -o -name "*.png" | grep -v ".git" | head -1)
           echo "Found icon: $ICON_FILE"
 
@@ -216,7 +215,6 @@ jobs:
             convert "$ICON_FILE" -resize 192x192 live2win-apk/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
             convert "$ICON_FILE" -resize 192x192 live2win-apk/app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png
           else
-            # Default colored icon if no file found
             for size in "72:hdpi" "48:mdpi" "96:xhdpi" "144:xxhdpi" "192:xxxhdpi"; do
               S=$(echo $size | cut -d: -f1)
               D=$(echo $size | cut -d: -f2)
@@ -322,7 +320,7 @@ jobs:
           ./gradlew assembleRelease --no-daemon --stacktrace
 
       - name: Upload APK Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Live2Win-APK
           path: live2win-apk/app/build/outputs/apk/release/app-release.apk
